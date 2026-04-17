@@ -12,7 +12,7 @@ import { orderRouter } from './src/modules/order/order.router.js';
 import { reviewRouter } from './src/modules/review/review.router.js';
 import createInvoice from './src/utils/pdfinvoice.js';
 import morgan from 'morgan';
- 
+ import cors from 'cors';
 
  const app = express();
 dotenv.config();
@@ -22,6 +22,46 @@ app.use(express.json());
 
 // connect DataBase
 await connectionDB();
+// Cors
+// const whitelist = ['http://127.0.0.1:5500'];
+// app.use((req, res, next) => {
+//    console.log("------------------- ");
+   
+//    const origin = req.header('origin');
+
+//    console.log(origin);
+//    if(!whitelist.includes(origin)){
+//       return next(new Error('Origin not allowed'));
+//    }
+//    res.setHeader('Access-Control-Allow-Origin', "*");
+//    res.setHeader('Access-Control-Allow-Headers', "*");
+//    res.setHeader('Access-Control-Allow-Methods', "*");
+//    res.setHeader('Access-Control-Private-Network', true);
+//    return next();
+// });
+
+const whitelist = ['http://127.0.0.1:5500'];
+const corsOptions = {
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl)
+        if (!origin) return callback(null, true);
+      if(  req.originalUrl.includes('/success') || req.originalUrl.includes('/cancel') || req.originalUrl.includes('/auth/activate-account') ){
+        return callback(null, true);
+      }
+        if (whitelist.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    allowedHeaders: ["Content-Type", "Authorization", "token"], // Add your custom headers here
+    credentials: true
+};
+
+app.use(cors(corsOptions));
+
+//
 app.use(morgan('combined'));
 //   await createInvoice(invoice, "invoice.pdf");
 // router

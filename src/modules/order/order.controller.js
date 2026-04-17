@@ -10,6 +10,7 @@ import { fileURLToPath } from "url";
 import {SendEmail} from "../../utils/sendEmail.js";
 import { updateStock } from "./order.service.js";
 import { clearCart } from "./order.service.js";
+import Stripe from "stripe";
 const __dirname = path.dirname(fileURLToPath(import.meta.url)); // order folder
 
 export const createOrder = asyncHandler(
@@ -98,21 +99,58 @@ export const createOrder = asyncHandler(
         //           filename: `${order._id}.pdf`
         //     }]
         // });
-        const isSent = await SendEmail({
-    to: req.user.email,
-    subject: "your order invoice",
-    attachments: [{
-        path: secure_url, // Pass the string directly, not an object
-        contentType: 'application/pdf',
-        filename: `invoice_${order._id}.pdf`
-    }]
-});
-        if(!isSent) return next(new Error("failed to send email"));
+//         const isSent = await SendEmail({
+//     to: req.user.email,
+//     subject: "your order invoice",
+//     attachments: [{
+//         path: secure_url, // Pass the string directly, not an object
+//         contentType: 'application/pdf',
+//         filename: `invoice_${order._id}.pdf`
+//     }]
+// });
+        // if(!isSent) return next(new Error("failed to send email"));
         // update stock
         await updateStock(products);
         // clear cart
         await clearCart(req.user.id);
-        // send response
+        if(payment == "visa"){
+            const stripe= new Stripe(process.env.Secretkey);
+            //coupon stripe
+            // let couponStripe;
+            // if(checkCoupon){
+            //     couponStripe= await stripe.coupons.create({
+            //         name: checkCoupon.name,
+            //         percent_off: checkCoupon.discount,
+            //         duration: 'once'
+            //     });
+            // }
+            const session = await stripe.checkout.sessions.create({
+                payment_method_types: ['card'],
+                mode: 'payment',
+                success_url:  process.env.sucess_url,
+                cancel_url:  process.env.cancel_url,
+                line_items: orderProducts.map(pro => {
+                    return {
+                        price_data: {
+                            currency: 'egp',
+                            product_data: {
+                                name: pro.name,
+                            },
+                            unit_amount: pro.itemPrice * 100
+                        },
+                        quantity: pro.quantity
+                    }
+                })
+            });
+ return res.json({
+            success: true,
+            results : {
+                url: session.url
+            }
+                })
+        }
+       
+      //  send response
         return res.json({
             success: true,
             message: "added order successfully",
