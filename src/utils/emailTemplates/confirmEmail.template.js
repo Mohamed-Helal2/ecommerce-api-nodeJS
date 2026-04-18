@@ -35,7 +35,7 @@ export const confirmEmailTemplate = (token) => {
       <h2>Welcome to our platform 🎉</h2>
       <p>Please confirm your email to activate your account</p>
 
-      <a class="btn" href="http://localhost:3000/auth/confirmEmail/${token}">
+      <a class="btn" href="https://ecommerce-api-node-js.vercel.app/auth/confirmEmail/${token}">
           Confirm Email
       </a>
 
@@ -46,3 +46,5 @@ export const confirmEmailTemplate = (token) => {
   </html>
   `;
 };
+
+    //   http://localhost:3000
